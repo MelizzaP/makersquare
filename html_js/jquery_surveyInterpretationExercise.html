@@ -1,0 +1,237 @@
+<html>
+<head>
+  <title>jQuery Basic</title>
+</head>
+<body>
+<form class="cheese">
+  <h3>New Cheese Review</h3>
+
+  <!-- This errors div will be empty until the user submits a bad request -->
+  <div class="errors"></div>
+
+  <label>Reviewer name:</label>
+  <input type="text" name="reviewer" />
+  <label>Comment:</label>
+  <input type="text" name="comment" />
+  <label>Rating:</label>
+  <input type="text" name="rating" />
+  <label>Cheese name:</label>
+  <input type="text" name= "cheese" />
+  <br />
+
+  <input type="submit" value="Submit Review" />
+</form>
+
+<h3>Top Restaraunts</h3>
+<ul class="top-restaurants"></ul>
+
+<h3>Popular Movie Genres</h3>
+<ul class="movie-genres"></ul>
+
+<h3>Chawsome Cheeses</h3>
+<div class="cheeses"></div>
+
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+
+ <script type="text/javascript">
+	
+	$('form.cheese').on('submit', function (e) {
+	  e.preventDefault()
+
+	  // Delete this next line when it starts getting annoying :)
+	  alert("You submitted the form! (but I stopped it)")
+
+	  var requestBody = {}
+	  requestBody.reviewer = $('[name=reviewer]', this).val()
+	  requestBody.comment = $('[name=comment]', this).val()
+	  requestBody.rating = $('[name=rating]', this).val()
+	  requestBody.cheese = $('[name=cheese]', this).val()
+
+	  var url = "http://critics.api.mks.io/cheeses"
+	  $('form.cheese .errors').empty()
+	  $.post(url, requestBody)
+	    .done(function(newCheese) {
+	      console.log("Success! Created new cheese review:", newCheese)
+	    })
+	    .fail(function(error) {
+	      var errorObj = JSON.parse(error.responseText)
+
+	      for (var fieldName in errorObj) {
+	        var errorText = errorObj[fieldName].join('; ')
+
+	        var $errorDiv = $('<div>').addClass('error')
+	        $errorDiv.html(fieldName + " - " + errorText)
+
+	        $('form.cheese .errors').append($errorDiv)
+	      }
+	    })
+	})
+	// //form stuff for cheeses
+	// $('form.cheese').on('submit', function (e) {
+	//   e.preventDefault()
+
+	//   // Delete this next line when it starts getting annoying :)
+	//   alert("You submitted the form! (but I stopped it)")
+
+	//   var requestBody = {}
+	//   requestBody.reviewer = $('[name=reviewer]', this).val()
+
+	//  var url = "http://critics.api.mks.io/cheeses"
+	//   $('form.cheese .errors').empty()
+	//   $.post(url, requestBody)
+	//     .done(function(newCheese) {
+	//       console.log("Success! Created new cheese review:", newCheese)
+	//     })
+	//     .fail(function(error) {
+	//       var errorObj = JSON.parse(error.responseText)
+
+	//       for (var fieldName in errorObj) {
+	//         var errorText = errorObj[fieldName].join('; ')
+
+	//         var $errorDiv = $('<div>').addClass('error')
+	//         $errorDiv.html(fieldName + " - " + errorText)
+
+	//         $('form.cheese .errors').append($errorDiv)
+	//       }
+	//     })
+	// })
+
+	// }
+
+ 	//restaurants stuff
+	$.get("http://critics.api.mks.io/restaurants", function (reviews) {
+	  // console.log("Restaurant reviews:", reviews)
+
+	  var reviewers = []
+	  reviews.forEach(function(r) {
+	    if (reviewers.indexOf(r.reviewer) == -1) {
+	      reviewers.push(r.reviewer)
+	    }
+	  })
+	  console.log("All reviewers:", reviewers)
+
+	  var terse = reviews.filter(function(r) {
+	    return r.comment.length < 30
+	  })
+	  console.log("Terse reviews:", terse)
+
+
+	 // this collects all the ratings over 7 and stores them in ratingsOver8 
+	var ratingsOver8 = reviews.filter(function(r){
+		return r.rating > 7
+	})
+
+	// this sorts them in descending order
+	ratingsOver8.sort(function(a,b){
+		return b.rating-a.rating
+	})
+
+	ratingsOver8.forEach(function (r){
+		console.log(r.rating+' - '+r.venue)
+	})
+
+	var renderTopRated = function (ratingsOver8){
+		var ul = $('ul.top-restaurants')
+		ratingsOver8.forEach(function (v){
+			var li = $('<li>')
+			var strong = $('<strong>')
+			strong.append(v.rating)
+			li.append(strong)
+			li.append(' - '+v.venue)
+			ul.append(li)
+
+		})
+	}
+	renderTopRated(ratingsOver8)
+
+
+
+	var keywordAustin = reviews.filter (function(r){
+		return r.venue.match(/Austin/gi)
+	})
+	console.log("Austin Restaurants")	
+	keywordAustin.forEach(function(r){
+		console.log(r.venue)
+	})
+
+	})
+
+	//movie stuff
+	$.get("http://critics.api.mks.io/movie-genres", function (reviews) {
+
+		var counts = {}
+	    var totals = {}
+	    var highestCount = 0
+	    reviews.forEach(function (g){
+	        counts[g.genre] || (counts[g.genre] = 0)  //js trick either intializes a count or adds to it
+	        totals[g.genre] || (totals[g.genre] = 0)
+	        counts[g.genre] += 1
+	        totals[g.genre] += Number(g.rating)
+	    })
+
+	    // this pushes all the the objects into an array
+	    var counted = []
+	    for (var genre in counts){
+	        counted.push({'genre':genre, 'ratingCount':counts[genre], 'total':totals[genre], 'avg': totals[genre] / counts[genre] })
+	    }
+	    var sortedByGenre = counted.sort(function(a, b){
+	        return b.ratingCount-a.ratingCount
+	    })
+	    console.log("Genres by Number of Reviewers")
+	    sortedByGenre.forEach(function(g){
+	    	console.log(g.genre+' - '+g.ratingCount)
+	    })
+	    var sortedByRating = counted.sort(function(a,b){
+	    	return b.avg-a.avg
+	    })
+	    console.log("Genres sorted by average rating")
+	    sortedByRating.forEach(function(r){
+	    	console.log(r.genre+ ' - '+ r.avg)
+	    })
+
+	    var renderTopRated = function(sortedByRating){
+	    	var ul = $('ul.movie-genres')
+	    	sortedByRating.forEach(function(r){
+	    		var li = $('<li>')
+	    		var strong = $('<strong>')
+	    		var i = $('<i>')
+	    		li.text(r.genre + ' - ')
+	    		strong.text(r.avg+' ')
+	    		i.text(r.ratingCount+ ' reviews')
+	    		li.append(strong,i)
+	    		ul.append(li)
+	    	})
+	    }
+		renderTopRated(sortedByRating)
+	})
+
+	// cheese stuff
+	$.get("http://critics.api.mks.io/cheeses", function (reviews) {
+		reviews.forEach(function(r){
+			console.log(r.cheese +": "+r.comment+" -- " +r.reviewer)
+		})
+
+		var renderCheeses = function(reviews){
+			var cheesesDiv = $('div.cheeses')
+			reviews.forEach(function(cheese){
+				var divReview = $('<div>').addClass('review')
+				var h3 = $('<h3>')
+				var blockquote = $('<blockquote>')
+				var cite = $('<cite>')
+				h3.text(cheese.cheese)
+				blockquote.text(cheese.comment)
+				cite.text(' -- ' +cheese.reviewer)
+				blockquote.append(cite)
+				divReview.append(h3)
+				cheesesDiv.append(divReview,blockquote)
+			})
+		}
+		renderCheeses(reviews)
+	})
+
+
+</script>
+
+</body>
+</html>

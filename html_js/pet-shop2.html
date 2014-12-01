@@ -1,0 +1,202 @@
+<html>
+<head>
+  <title>Pet Shop World</title>
+  <style type="text/css">
+  .pet {
+    float: left;
+    margin: 0 0.4em;
+  }
+  .pet img {
+    max-height: 120px;
+  }
+  </style>
+</head>
+<body>
+
+<select class="pet-shops">
+  <option>-- Please Select a Pet Shop --</option>
+</select>
+
+<div class="pet-shop">
+  <h3 class="title">Please select a Pet Shop above</h3>
+
+  <div class="cats"></div>
+  <div class="dogs"></div>
+
+  <form class="new-cat"></form>
+  <form class="new-dog"></form>
+</div>
+
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script type="text/javascript">
+var host = "http://pet-shop.api.mks.io"
+// vm stands for view-model. This is the current state of our user interface
+var vm = {
+  shops: [],
+  cats: [],
+  dogs: []
+}
+
+// Reusable utility function
+var findById = function (array, id) {
+  for (var i=0; i < array.length; i++) {
+    var obj = array[i]
+    if (obj.id === id) return obj
+  }
+  return null
+}
+
+// Get all pet shops on page load
+$.get(host + '/shops', function (shops) {
+  vm.shops = shops
+  console.log("Got shops:", shops)
+
+  var $select = $('select.pet-shops')
+  shops.forEach(function(shop) {
+    var $option = $('<option>').text(shop.name).attr('value', shop.id)
+    $select.append($option)
+  })
+})
+
+var activeShop = null
+$('select.pet-shops').on('change', function (e) {
+  var shopId = parseInt( $(this).val() )
+  activeShop = findById(vm.shops, shopId)
+  console.log("Selected:", shopId, activeShop)
+
+  $('.pet-shop h3.title').text(activeShop.name)
+
+  $.get(host + '/shops/' + shopId + '/cats', renderCats)
+
+  $.get(host + '/shops/' + shopId + '/dogs', renderDogs)
+})
+
+var renderCats = function (cats) {
+  // <div class="pet cat">
+  //   <div class="name">Lazy Eater (happiness: 5)</div>
+  //   <img src="http://i.imgur.com/vCuyjsS.gif" />
+  //   <div class="adopted-status">
+  //     Adopted: No :(
+  //     <a class="adopt" href="#">Adopt this Pet</a>
+  //   </div>
+  // </div>
+  var $container = $('.pet-shop .cats').empty()
+  cats.forEach(function (cat) {
+    var $catDiv = $('<div>').addClass('pet cat').attr('data-id', cat.id)
+
+    var adoptLink = '';
+    if (!cat.adopted) {
+      adoptLink = $('<a>')
+        .addClass('adopt')
+        .attr('href', '#')
+        .attr('data-resource', 'cats')
+        .attr('data-id', cat.id)
+        .text('Adopt this pet')
+    }
+
+    $catDiv.append(
+      $('<div>').addClass('name').text(cat.name),
+      $('<img>').attr('src', cat.imageUrl),
+      $('<div>').addClass('adopted-status').append(
+        'Adopted:' + (cat.adopted ? 'Yes!' : 'No :('),
+        '<br />',
+        adoptLink
+      )
+    )
+    $container.append($catDiv)
+  })
+}
+
+var renderDogs = function (dogs) {
+  // <div class="pet cat">
+  //   <div class="name">Lazy Eater (happiness: 5)</div>
+  //   <img src="http://i.imgur.com/vCuyjsS.gif" />
+  //   <div class="adopted-status">
+  //     Adopted: No :(
+  //     <a class="adopt" href="#">Adopt this Pet</a>
+  //   </div>
+  // </div>
+  var $container = $('.pet-shop .dogs').empty()
+  dogs.forEach(function (dog) {
+    var $dogDiv = $('<div>').addClass('pet dog').attr('data-id', dog.id)
+
+    var adoptLink = '';
+    if (!dog.adopted) {
+      adoptLink = $('<a>')
+        .addClass('adopt')
+        .attr('href', '#')
+        .attr('data-resource', 'dogs')
+        .attr('data-id', dog.id)
+        .text('Adopt this pet')
+    }
+
+    $dogDiv.append(
+      $('<div>').addClass('name').text(dog.name),
+      $('<img>').attr('src', dog.imageUrl),
+      $('<div>').addClass('adopted-status').append(
+        'Adopted:' + (dog.adopted ? 'Yes!' : 'No :('),
+        '<br />',
+        adoptLink
+      )
+    )
+    $container.append($dogDiv)
+  })
+}
+
+/*
+	$('form.new-cat').on('submit', function (e) {
+	  e.preventDefault()
+
+	  // Delete this next line when it starts getting annoying :)
+	  alert("You submitted the form! (but I stopped it)")
+
+	  var requestBody = {}
+	  requestBody.name = $('[name=name]', this).val()
+	  requestBody.imageUrl = $('[name=imageUrl]', this).val()
+
+	  $('form.new-cat').empty()
+	  $.post(host + '/shops/' + shopId + '/cats', requestBody)
+	    .done(function(newCat) {
+	      console.log("Success! Created new cheese review:", newCat)
+	    })
+	    .fail(function(error) {
+	      var errorObj = JSON.parse(error.responseText)
+
+	      for (var fieldName in errorObj) {
+	        var errorText = errorObj[fieldName].join('; ')
+
+	        var $errorDiv = $('<div>').addClass('error')
+	        $errorDiv.html(fieldName + " - " + errorText)
+
+	        $('form.new-cat').append($errorDiv)
+	      }
+	    })
+	})
+*/
+
+
+// Event delegation
+$(document).on('click', 'a.adopt', function (e) {
+  e.preventDefault()
+  
+  // var resource = $(this).attr('data-resource')
+  var resource = $(this).data('resource')
+  var id = $(this).data('id')
+  
+  $.ajax({
+    url: host + '/shops/' + activeShop.id + '/' + resource + '/' + id,
+    type: 'PUT',
+    data: { adopted: true }
+  })
+  .success(function (response) {
+  	console.log("Got resp:", response)
+    var $catDiv = $('.pet-shop .cat[data-id='+id+']')
+    $catDiv.find('.adopted-status').text('Adopted: Yes!')
+  })
+})
+
+</script>
+
+</body>
+</html>

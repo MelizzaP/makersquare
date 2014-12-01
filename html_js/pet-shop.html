@@ -1,0 +1,144 @@
+<html>
+<head>
+  <title>Pet Shop World</title>
+</head>
+<body>
+
+<select class="pet-shops">
+  <option>-- Please Select a Pet Shop --</option>
+</select>
+
+<div class="pet-shop">
+  <h3 class="title">Please select a Pet Shop above</h3>
+
+  <div class="cats"></div>
+  <div class="dogs"></div>
+
+  <form class="new-cat"></form>
+  <form class="new-dog"></form>
+</div>
+
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script type="text/javascript">
+var host = "http://pet-shop.api.mks.io"
+// vm stands for view-model. This is the current state of our user interface
+var vm = {
+  shops: [],
+  cats: [],
+  dogs: []
+}
+
+// Reusable utility function
+var findById = function (array, id) {
+  for (var i=0; i < array.length; i++) {
+    var obj = array[i]
+    if (obj.id === id) return obj
+  }
+  return null
+}
+
+// Get all pet shops on page load
+$.get(host + '/shops', function (shops) {
+  vm.shops = shops
+  console.log("Got shops:", shops)
+
+  var $select = $('select.pet-shops')
+  shops.forEach(function(shop) {
+    var $option = $('<option>').text(shop.name).attr('value', shop.id)
+    $select.append($option)
+  })
+})
+
+$(document).on('click', 'a.adopt', function (e) {
+ e.preventDefault();
+
+ alert(name+' adopted!')
+
+ var shopId = parseInt( $('select.pet-shops').val() )
+ var animal = $(this).parent().parent().attr("class")
+ var petID = parseInt( $(this).attr("data-id") )
+
+ var url = "http://pet-shop.api.mks.io/shops/" + shopId + "/" + animal + "/" + petID
+
+ $.ajax({
+   type: "PUT",
+   url: url,
+   data: {"adopted": true}
+ });
+})
+
+var activeShop = null
+$('select.pet-shops').on('change', function (e) {
+  var shopId = parseInt( $(this).val() )
+  activeShop = findById(vm.shops, shopId)
+  console.log("Selected:", shopId, activeShop)
+
+  $('.pet-shop h3.title').text(activeShop.name)
+
+
+  // TODO: MAKE GET REQUEST TO GET CATS AND THEN CALL renderCats
+  $.get(host+'/shops/'+shopId+'/cats', function (cats){
+    vm.cats = cats
+    // document(cats)
+    console.log('Cats: ', cats)
+    renderCats(cats)
+  })
+
+  // TODO: MAKE GET REQUEST TO GET DOGS AND THEN CALL renderDogs
+  $.get(host + '/shops/' +shopId+'/dogs', function (dogs){
+    vm.dogs = dogs
+    // document(dogs)
+    console.log("Dogs: ", dogs)
+    renderDogs(dogs)
+  })
+})
+
+var renderCats = function (cats) {
+  // TODO
+  $('.cats').html('')
+  var catsDiv = $('div.cats')
+  cats.forEach(function(cat){
+    var catPic =$('<img>')
+    var catName = $('<div>').addClass('name')
+    catName.text(cat.name)
+    var adoptedDiv = $('<div>').addClass('adopted-status')
+    catPic.attr('src', cat.imageUrl)
+    catPic.attr('width',"100")
+    catPic.attr('height',"100")
+    catsDiv.append(catName, catPic)
+  })
+}
+
+var renderDogs = function (dogs) {
+  // TODO
+  //render format 
+  //   <div class="pet dog">
+  //   <div class="name">Lazy Eater (happiness: 5)</div>
+  //   <img src="http://i.imgur.com/vCuyjsS.gif" />
+  //   <div class="adopted-status">
+  //     Adopted - No :(
+  //     <a class="adopt" href="#">Adopt this Pet</a>
+  //   </div>
+  // </div>
+  $('.dogs').html('')
+    var dogsDiv = $('div.dogs')
+    dogs.forEach(function (dog){
+      var dogPic = $('<img>')
+      var dogName = $('<div>').addClass('name')
+      var adoptedDiv = $('<div>').addClass('adopted-status')
+      var adopt = $('<a>').addClass('adopt')
+      dogName.text(dog.name+' (happiness: '+dog.happiness+')')
+      dogPic.attr('src', dog.imageUrl)
+      dogPic.attr('width',"100")
+      dogPic.attr('height',"100")
+      adopt.attr('href', '#')
+      adopt.text('Adopt this Pet')
+      adoptedDiv.append('Adopted - No :(',adopt)
+      dogsDiv.append(dogName,dogPic,adoptedDiv)
+    })
+}
+</script>
+
+</body>
+</html>
