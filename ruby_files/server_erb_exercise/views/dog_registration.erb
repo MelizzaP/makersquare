@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dog Registration Page</title>
+</head>
+<body>
+  <h1>Give us some info on your dog:</h1>
+  <form action="/dog-registration-results">
+    <div>
+      <label for="name">Name:</label>
+      <input type="text" id="name" name="name" />
+    </div>
+    <div>
+      <label for="breed">Breed:</label>
+      <input type="text" id="breed" name="breed" />
+    </div>
+    <div>
+      <label for="color">Color:</label>
+      <input type="text" id="color" name="color" />
+    </div>
+    <div>
+      <label for="mean">Is it mean?</label>
+      <input type="checkbox" id="mean" name="mean" />
+    </div>
+    <div>
+        <label for="gender">Gender:</label>
+        <select name="gender">
+         <option value="Male">Male</option>
+         <option value="Female">Female</option>
+         <option value="Chooses not to identify">Chooses not to identify</option>
+       </select>
+    </div>
+    <div>
+      <input type="submit" value="Submit Info">
+    </div>
+  </form>
+</body>
+</html>

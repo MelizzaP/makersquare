@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dog Registration Results</title>
+</head>
+<body>
+  <h1>Registration Complete!</h1>
+  <strong>Name: <%= @name %></strong>
+  <p>Breed: <%= @breed %></p>
+  <p>Color: <%= @color %> </p>
+  <% if @mean %>
+    <p><%= @name %> is an asshole</p>
+  <% end %>
+  <p>Gender: <%= @gender %></p>
+</body>
+</html>
